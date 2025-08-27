@@ -5,10 +5,10 @@ import aiohttp
 import time
 import json
 import logging
+import requests
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 from datetime import datetime
-import structlog
 
 from .config import ConfigManager
 
@@ -36,7 +36,7 @@ class OpenRouterClient:
     
     def __init__(self, config_manager: Optional[ConfigManager] = None):
         self.config = config_manager or ConfigManager()
-        self.logger = structlog.get_logger()
+        self.logger = logging.getLogger(__name__)
         self.session: Optional[aiohttp.ClientSession] = None
         
         # API configuration
@@ -45,10 +45,12 @@ class OpenRouterClient:
         
         # Fallback models in order of preference
         self.fallback_models = self.config.get_config('fallback_models', [
+            "deepseek/deepseek-chat-v3.1",
+            "z-ai/glm-4.5-air:free", 
+            "openai/gpt-oss-20b:free",
+            "qwen/qwen3-30b-a3b-instruct-2507",
             "anthropic/claude-3-sonnet-20240229",
             "openai/gpt-4-turbo",
-            "google/gemini-pro",
-            "meta-llama/llama-2-70b-chat",
         ])
         
         # Rate limiting and retry configuration
@@ -82,9 +84,26 @@ class OpenRouterClient:
             await self.session.close()
             self.session = None
     
-    async def generate_response(
+    async def generate_response_with_model(
         self,
         messages: List[ChatMessage],
+        model: str,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ) -> AIResponse:
+        """Generate response with specific model (for model orchestrator)."""
+        return await self._make_single_request(
+            messages=messages,
+            model=model,
+            temperature=temperature or 0.7,
+            max_tokens=max_tokens or 4096,
+            **kwargs
+        )
+    
+    async def generate_response(
+        self,
+        messages,  # Can be List[ChatMessage] or str
         model: Optional[str] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
@@ -108,6 +127,12 @@ class OpenRouterClient:
         """
         if not self.api_key:
             raise ValueError("OpenRouter API key not configured")
+            
+        # Handle string input by converting to ChatMessage
+        if isinstance(messages, str):
+            messages = [ChatMessage(role="user", content=messages, timestamp=datetime.now())]
+        elif isinstance(messages, list) and messages and isinstance(messages[0], str):
+            messages = [ChatMessage(role="user", content=messages[0], timestamp=datetime.now())]
         
         await self.start_session()
         
@@ -119,7 +144,7 @@ class OpenRouterClient:
                 continue
                 
             try:
-                self.logger.info("Attempting generation", model=attempt_model)
+                self.logger.info(f"Attempting generation with model: {attempt_model}")
                 response = await self._make_request(
                     messages=messages,
                     model=attempt_model,
@@ -146,11 +171,7 @@ class OpenRouterClient:
                 return ai_response
                 
             except Exception as e:
-                self.logger.warning(
-                    "Model failed, trying next",
-                    model=attempt_model,
-                    error=str(e)
-                )
+                self.logger.warning(f"Model {attempt_model} failed, trying next: {str(e)}")
                 
                 # If it's the last model, re-raise the exception
                 if attempt_model == models_to_try[-1]:
@@ -161,6 +182,47 @@ class OpenRouterClient:
                 continue
         
         raise Exception("All AI models failed")
+    
+    async def generate_response_prompt(
+        self, 
+        prompt: str, 
+        model: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None
+    ) -> Dict[str, Any]:
+        """Generate AI response (async version for API)."""
+        messages = [ChatMessage(role="user", content=prompt)]
+        response = await self.generate_response(messages, model, temperature, max_tokens)
+        
+        return {
+            "content": response.content,
+            "model": response.model,
+            "usage": response.usage,
+            "timestamp": response.timestamp.isoformat(),
+            "cost_estimate": response.cost_estimate
+        }
+    
+    async def _make_single_request(
+        self,
+        messages: List[ChatMessage],
+        model: str,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ) -> AIResponse:
+        """Make single API request with specific model (for model orchestrator)."""
+        
+        # Make the HTTP request
+        response_data = await self._make_request(
+            messages=messages,
+            model=model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            **kwargs
+        )
+        
+        # Parse response into AIResponse
+        return self._parse_response(response_data, model)
     
     async def _make_request(
         self,
@@ -176,8 +238,8 @@ class OpenRouterClient:
         data = {
             "model": model,
             "messages": [{"role": msg.role, "content": msg.content} for msg in messages],
-            "temperature": temperature or self.config.get_config('temperature', 0.7),
-            "max_tokens": max_tokens or self.config.get_config('max_tokens', 4000),
+            "temperature": float(temperature or self.config.get_config('temperature', 0.7)),
+            "max_tokens": int(max_tokens or self.config.get_config('max_tokens', 4000)),
         }
         
         # Add additional parameters
@@ -208,15 +270,12 @@ class OpenRouterClient:
                     
                     # Handle specific HTTP errors
                     elif response.status == 401:
-                        raise ValueError("Invalid API key")
+                        response_text = await response.text()
+                        raise ValueError(f"Invalid API key - Status 401: {response_text[:200]}")
                     elif response.status == 429:
                         # Rate limited - wait longer
                         wait_time = self.retry_delay * (2 ** attempt) * 2
-                        self.logger.warning(
-                            "Rate limited, waiting",
-                            wait_time=wait_time,
-                            attempt=attempt + 1
-                        )
+                        self.logger.warning(f"Rate limited, waiting {wait_time}s (attempt {attempt + 1})")
                         await asyncio.sleep(wait_time)
                         continue
                     elif response.status >= 500:
@@ -236,12 +295,7 @@ class OpenRouterClient:
                 last_exception = e
                 wait_time = self.retry_delay * (2 ** attempt)
                 
-                self.logger.warning(
-                    "Request failed, retrying",
-                    error=str(e),
-                    attempt=attempt + 1,
-                    wait_time=wait_time
-                )
+                self.logger.warning(f"Request failed, retrying in {wait_time}s (attempt {attempt + 1}): {str(e)}")
                 
                 if attempt < self.max_retries - 1:
                     await asyncio.sleep(wait_time)
@@ -372,3 +426,7 @@ class MultiLLMClient:
         """Close all active sessions."""
         if self.openrouter_client:
             await self.openrouter_client.close_session()
+
+
+# Backward compatibility alias
+AIClient = OpenRouterClient
