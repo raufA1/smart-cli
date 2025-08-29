@@ -1,0 +1,31 @@
+extends: default
+
+rules:
+  line-length:
+    max: 120
+    level: warning
+  
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+  
+  truthy:
+    allowed-values: ['true', 'false']
+    check-keys: false
+  
+  comments:
+    min-spaces-from-content: 1
+  
+  document-start:
+    present: false
+  
+  empty-lines:
+    max: 2
+    max-start: 0
+    max-end: 1
+
+ignore: |
+  .github/workflows/
+  .pre-commit-config.yaml
+  docker-compose*.yml

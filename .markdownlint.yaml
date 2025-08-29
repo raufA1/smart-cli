@@ -1,0 +1,112 @@
+default: true
+
+# Line length
+MD013:
+  line_length: 120
+  code_blocks: false
+  tables: false
+
+# Multiple consecutive blank lines
+MD012: false
+
+# Inline HTML
+MD033: false
+
+# Bare URL used
+MD034: false
+
+# First line in file should be a top level header
+MD041: false
+
+# No space after hash on atx style header
+MD018: false
+
+# Multiple spaces after hash on atx style header
+MD019: false
+
+# No space inside hashes on closed atx style header
+MD020: false
+
+# Multiple spaces inside hashes on closed atx style header
+MD021: false
+
+# Headers should be surrounded by blank lines
+MD022: false
+
+# Headers must start at the beginning of the line
+MD023: false
+
+# Multiple headers with the same content
+MD024:
+  allow_different_nesting: true
+
+# Multiple top level headers in the same document
+MD025: false
+
+# Trailing punctuation in header
+MD026:
+  punctuation: ".,;:!"
+
+# Multiple spaces after blockquote symbol
+MD027: false
+
+# Blank line inside blockquote
+MD028: false
+
+# Ordered list item prefix
+MD029:
+  style: "ordered"
+
+# Spaces after list markers
+MD030:
+  ul_single: 1
+  ol_single: 1
+  ul_multi: 1
+  ol_multi: 1
+
+# Fenced code blocks should be surrounded by blank lines
+MD031: false
+
+# Lists should be surrounded by blank lines
+MD032: false
+
+# Emphasis used instead of a header
+MD036: false
+
+# Spaces inside emphasis markers
+MD037: false
+
+# Code span style
+MD038: false
+
+# Spaces inside link text
+MD039: false
+
+# Fenced code blocks should have a language specified
+MD040: false
+
+# First line in file should be a top level header
+MD041: false
+
+# No empty links
+MD042: false
+
+# Required header structure
+MD043: false
+
+# Proper names should have the correct capitalization
+MD044: false
+
+# Images should have alternate text (alt text)
+MD045: false
+
+# Code block style
+MD046:
+  style: "fenced"
+
+# Files should end with a single newline character
+MD047: true
+
+# Code fence style
+MD048:
+  style: "backtick"

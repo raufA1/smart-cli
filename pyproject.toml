@@ -1,60 +1,223 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "smart-cli"
 version = "1.0.0"
 description = "AI-powered CLI tool for code generation and project management"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
 authors = [
-    {name = "Smart CLI Team", email = "team@smart-cli.com"},
+    {name = "Rauf Alizada", email = "raufalizada@example.com"}
+]
+keywords = ["cli", "ai", "code-generation", "development"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Utilities",
 ]
 dependencies = [
-    "click>=8.1.0",
-    "typer>=0.9.0",
-    "pydantic>=2.0.0",
-    "rich>=13.0.0",
-    "aiohttp>=3.8.0",
-    "asyncio",
-    "cryptography>=41.0.0",
-    "pyjwt>=2.8.0",
-    "sqlite3",
-    "redis>=4.5.0",
-    "structlog>=23.1.0",
+    "typer[all]>=0.9.0",
+    "rich>=13.7.0",
+    "requests>=2.31.0",
+    "pyyaml>=6.0.1",
+    "cryptography>=41.0.7",
+    "redis>=5.0.1",
+    "psutil>=5.9.6",
+    "aiohttp>=3.9.1",
+    "asyncio-throttle>=1.0.2",
+    "tenacity>=8.2.3",
+    "pydantic>=2.5.2",
+    "fastapi>=0.104.1",
+    "uvicorn[standard]>=0.24.0",
+    "python-multipart>=0.0.6",
+    "PyJWT>=2.8.0",
+    "python-jose[cryptography]>=3.3.0",
+    # Additional dependencies identified in analysis
+    "python-dotenv>=1.0.0",
+    "networkx>=3.0",
+    "sqlalchemy>=2.0.0",
     "prometheus-client>=0.17.0",
+    "beautifulsoup4>=4.12.0",
+    "html2text>=2020.1.16",
+    "structlog>=23.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
     "pytest-cov>=4.1.0",
-    "black>=23.7.0",
-    "flake8>=6.0.0",
-    "mypy>=1.5.0",
-    "pre-commit>=3.3.0",
+    "pytest-mock>=3.12.0",
+    "pytest-benchmark>=4.0.0",
+    "black>=23.12.1",
+    "isort>=5.13.2",
+    "flake8>=7.0.0",
+    "flake8-docstrings>=1.7.0",
+    "flake8-import-order>=0.18.2",
+    "flake8-bugbear>=23.12.2",
+    "mypy>=1.8.0",
+    "bandit>=1.7.5",
+    "safety>=2.3.5",
+    "pre-commit>=3.6.0",
+    "yamllint>=1.33.0",
+    "pydocstyle>=6.3.0",
+    "coverage[toml]>=7.3.2",
+    "types-PyYAML>=6.0.12.12",
+    "types-requests>=2.31.0.10",
+    "types-redis>=4.6.0.11",
 ]
+
 test = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
     "pytest-cov>=4.1.0",
-    "pytest-mock>=3.11.0",
+    "pytest-mock>=3.12.0",
+    "pytest-benchmark>=4.0.0",
+]
+
+docs = [
+    "sphinx>=7.2.6",
+    "sphinx-rtd-theme>=2.0.0",
+    "sphinx-autodoc-typehints>=1.25.2",
 ]
 
 [project.scripts]
-smart-cli = "src.cli:main"
+smart = "src.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/raufA1/smart-cli"
+Documentation = "https://github.com/raufA1/smart-cli/wiki"
+Repository = "https://github.com/raufA1/smart-cli.git"
+"Bug Tracker" = "https://github.com/raufA1/smart-cli/issues"
+
+# Tool configurations
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
+minversion = "7.0"
 testpaths = ["tests"]
-addopts = "--cov=src --cov-report=term-missing --cov-report=html"
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "-v",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "security: marks tests as security tests",
+    "benchmark: marks tests as benchmarks",
+    "unit: marks tests as unit tests",
+]
+filterwarnings = [
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
 
 [tool.black]
 line-length = 88
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "tests/*",
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__init__.py",
+    "*/conftest.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101", "B601"]  # Skip assert_used and shell injection in tests
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503", "D100", "D101", "D102", "D103", "D104", "D105"]
+per-file-ignores = [
+    "__init__.py:F401",
+    "tests/*:D,S",
+]
+max-complexity = 10
+
+[tool.pydocstyle]
+convention = "google"
+add-ignore = ["D100", "D101", "D102", "D103", "D104", "D105"]

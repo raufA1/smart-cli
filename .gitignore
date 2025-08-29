@@ -134,11 +134,24 @@ Thumbs.db
 
 # Smart CLI specific
 cache.db
+cache/
+.smart-cli/
+smart-cli-venv/
 logs/
+sessions/
 *.key
 *.pem
 config.local.yaml
 .env.local
+debug.log
+benchmark.json
+bandit-report.json
+safety-report.json
 
 # Claude Code
 .claude/temp/
+
+# Development and testing
+.coverage
+.pytest_cache
+.toxtest-env/

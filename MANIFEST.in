@@ -1,0 +1,49 @@
+# Include additional files for packaging
+include README.md
+include CHANGELOG.md
+include LICENSE
+include CONTRIBUTING.md
+include SECURITY.md
+include CODE_OF_CONDUCT.md
+include requirements.txt
+include pyproject.toml
+include .pre-commit-config.yaml
+
+# Include configuration files
+include .yamllint.yaml
+include .markdownlint.yaml
+include .secrets.baseline
+include Dockerfile
+include .dockerignore
+
+# Include GitHub templates
+recursive-include .github *.yml *.yaml *.md
+
+# Include source code
+recursive-include src *.py
+recursive-include src/templates *.txt *.yaml *.json
+
+# Include tests
+recursive-include tests *.py
+
+# Exclude development files
+exclude .gitignore
+exclude .coverage
+exclude *.log
+prune cache/
+prune logs/
+prune sessions/
+prune venv/
+prune .git/
+prune .pytest_cache/
+prune .tox/
+prune __pycache__/
+prune *.egg-info/
+
+# Exclude IDE files
+prune .vscode/
+prune .idea/
+exclude *.swp
+exclude *.swo
+exclude .DS_Store
+exclude Thumbs.db

@@ -1,0 +1,85 @@
+name: Documentation Improvement
+description: Suggest improvements to documentation or report documentation issues
+title: "[DOCS] "
+labels: ["documentation", "good-first-issue"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation! Clear docs make Smart CLI better for everyone.
+        
+  - type: dropdown
+    id: doc_type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation needs improvement?
+      options:
+        - README.md
+        - Installation Guide
+        - API Documentation
+        - User Guide
+        - Developer Documentation
+        - Code Comments
+        - Examples/Tutorials
+        - Command Help Text
+        - Other
+    validations:
+      required: true
+      
+  - type: textarea
+    id: issue
+    attributes:
+      label: Documentation Issue
+      description: What is unclear, missing, or incorrect in the current documentation?
+      placeholder: The current documentation is unclear about...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: improvement
+    attributes:
+      label: Suggested Improvement
+      description: How would you improve this documentation?
+      placeholder: I suggest we...
+    validations:
+      required: true
+      
+  - type: input
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Where is this documentation located? (file path, URL, etc.)
+      placeholder: docs/installation.md, line 45
+      
+  - type: textarea
+    id: context
+    attributes:
+      label: User Context
+      description: What were you trying to accomplish when you encountered this issue?
+      placeholder: I was trying to...
+      
+  - type: dropdown
+    id: experience
+    attributes:
+      label: Experience Level
+      description: What's your experience level with Smart CLI?
+      options:
+        - New user (first time)
+        - Beginner (< 1 month)
+        - Intermediate (1-6 months)
+        - Advanced (6+ months)
+        - Expert/Contributor
+    validations:
+      required: true
+      
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: Verification
+      options:
+        - label: I have searched existing issues to ensure this is not a duplicate
+          required: true
+        - label: I have identified the specific documentation that needs improvement
+          required: true
