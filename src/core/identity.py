@@ -130,8 +130,15 @@ class SmartIdentity:
             "python_version": platform.python_version(),
             "processor": platform.processor() or "Unknown",
             "hostname": platform.node(),
-            "working_directory": os.getcwd(),
+            "working_directory": self._get_safe_working_directory(),
         }
+
+    def _get_safe_working_directory(self) -> str:
+        """Get working directory safely, with fallback."""
+        try:
+            return os.getcwd()
+        except (FileNotFoundError, OSError):
+            return os.path.expanduser("~")
 
     def handle_identity_questions(self, question: str) -> str:
         """Handle questions about Smart CLI's identity."""

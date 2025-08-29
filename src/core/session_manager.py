@@ -36,7 +36,10 @@ class SessionManager:
 
         import os
 
-        current_project = os.path.basename(os.getcwd())
+        try:
+            current_project = os.path.basename(os.getcwd())
+        except (FileNotFoundError, OSError):
+            current_project = "unknown"
 
         header = Text()
         header.append("SMART CLI", style="bold cyan")

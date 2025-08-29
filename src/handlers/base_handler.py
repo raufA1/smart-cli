@@ -16,7 +16,7 @@ class BaseHandler(ABC):
         """Initialize handler with Smart CLI instance reference."""
         self.smart_cli = smart_cli_instance
         self.ai_client = smart_cli_instance.ai_client
-        self.ui_manager = smart_cli_instance.ui_manager
+        self.ui_manager = None  # UI manager deprecated
         self.config = smart_cli_instance.config
         self.session_manager = smart_cli_instance.session_manager
         self.debug = smart_cli_instance.debug

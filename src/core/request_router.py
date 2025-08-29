@@ -89,7 +89,10 @@ class RequestRouter:
             context["has_code_files"] = False
 
         # Check current directory name (project context)
-        context["current_dir"] = os.path.basename(os.getcwd())
+        try:
+            context["current_dir"] = os.path.basename(os.getcwd())
+        except (FileNotFoundError, OSError):
+            context["current_dir"] = "unknown"
 
         return context
 

@@ -37,7 +37,7 @@ class CommandHandler:
             return False
 
         elif cmd == "help":
-            self.ui_manager.display_help_menu()
+            await self.display_help()
 
         elif cmd == "clear":
             os.system("clear" if os.name == "posix" else "cls")

@@ -137,8 +137,11 @@ class SmartCLI:
     def _initialize_config(self):
         """Initialize configuration with validation."""
         try:
-            # Validate essential config silently
-            if not self.config.get_config("api_key"):
+            # Validate essential config silently - check for any API key
+            has_openrouter = self.config.get_config("openrouter_api_key")
+            has_anthropic = self.config.get_config("anthropic_api_key")
+            
+            if not (has_openrouter or has_anthropic):
                 return False
             return True
         except Exception:

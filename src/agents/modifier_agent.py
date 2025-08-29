@@ -178,9 +178,16 @@ Format as clean Python code without markdown blocks.
     ) -> tuple[bool, list, list]:
         """Generate new code - enhanced for complex multi-file projects."""
 
+        # First check if Architect Agent has created a project structure
+        architecture_files = self._find_architecture_files()
+        
         # Check if this is a complex multi-component project
-        if self._is_complex_project(description):
-            return await self._generate_multi_file_project(description)
+        if self._is_complex_project(description) or architecture_files:
+            if architecture_files:
+                self.log_info("Found architecture files - using structured approach")
+                return await self._generate_from_architecture(description, architecture_files)
+            else:
+                return await self._generate_multi_file_project(description)
         else:
             return await self._generate_single_file(description, target)
 
@@ -218,50 +225,76 @@ Format as clean Python code without markdown blocks.
     ) -> tuple[bool, list, list]:
         """Generate complete multi-file project structure."""
 
-        # Enhanced prompt for complex projects
+        # Enhanced prompt for complex projects with proper directory structure
         project_prompt = f"""
 Create a complete Python project based on: "{description}"
 
-Generate a professional, modular project structure with multiple files.
+Generate a professional, modular project structure with PROPER DIRECTORY ORGANIZATION.
 
-IMPORTANT: Provide multiple files in this exact format:
+IMPORTANT: Always use a well-organized directory structure like this:
 
-FILE: filename1.py
+PROJECT STRUCTURE:
+- src/ (source code)
+- tests/ (test files)
+- requirements.txt (dependencies)
+- README.md (project documentation)
+- .env.example (environment template)
+
+Provide multiple files in this EXACT format with proper paths:
+
+FILE: src/main.py
 ```python
-# Complete code for filename1.py
+# Main entry point
 ```
 
-FILE: filename2.py  
+FILE: src/scraper.py
 ```python
-# Complete code for filename2.py
+# Scraping functionality
+```
+
+FILE: src/config.py
+```python
+# Configuration management
+```
+
+FILE: tests/test_scraper.py
+```python
+# Unit tests
 ```
 
 FILE: requirements.txt
 ```
-# Required dependencies
+# Dependencies
+```
+
+FILE: README.md
+```markdown
+# Project documentation
 ```
 
 PROJECT REQUIREMENTS:
-1. Modular architecture with separate files for different concerns
-2. Main entry point file
-3. Configuration file support
-4. Requirements.txt with all dependencies
-5. Professional logging and error handling
-6. Type hints and documentation
-7. Following Python best practices
+1. Create src/ directory for all source code
+2. Create tests/ directory for all test files  
+3. Main entry point at src/main.py
+4. Configuration files in src/
+5. Requirements.txt in root
+6. README.md with setup instructions
+7. Professional structure like real projects
 
-For a web scraper system, include:
-- main.py (CLI entry point)
-- scraper.py (core scraping logic) 
-- database.py (SQLite operations)
-- config.py (configuration management)
-- utils.py (utility functions)
+For a web scraper system, use this structure:
+- src/main.py (CLI entry point)
+- src/scraper.py (core scraping logic)
+- src/database.py (database operations)
+- src/config.py (configuration)
+- src/utils.py (utilities)
+- tests/test_scraper.py (tests)
 - requirements.txt (dependencies)
+- README.md (documentation)
 
-Generate ALL required files for a complete working system.
+CRITICAL: Always use proper directory structure with src/ and tests/ folders!
 """
 
-        self.log_info("Generating multi-file project using AI...")
+        self.log_info("Generating multi-file project with proper structure using AI...")
         response = await self.ai_client.generate_response(project_prompt)
 
         if response and response.content:
@@ -443,6 +476,93 @@ Only provide the code block, no explanations outside of the code.
                 return False, [], [error_msg]
         else:
             error_msg = "No response from AI"
+            self.log_warning(error_msg)
+            return False, [], [error_msg]
+
+    def _find_architecture_files(self) -> list:
+        """Find architecture files created by Architect Agent."""
+        import glob
+        
+        architecture_files = []
+        
+        # Look for architecture overview files
+        architecture_patterns = [
+            "architecture_overview_*.md",
+            "technical_specifications_*.md"
+        ]
+        
+        for pattern in architecture_patterns:
+            files = glob.glob(pattern)
+            architecture_files.extend(files)
+        
+        return architecture_files
+    
+    async def _generate_from_architecture(
+        self, description: str, architecture_files: list
+    ) -> tuple[bool, list, list]:
+        """Generate code based on existing architecture files."""
+        
+        self.log_info("Reading architecture specifications...")
+        
+        # Read architecture content
+        architecture_content = ""
+        for arch_file in architecture_files:
+            try:
+                with open(arch_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    architecture_content += f"\n\n=== {arch_file} ===\n"
+                    architecture_content += f.read()
+            except Exception as e:
+                self.log_warning(f"Could not read {arch_file}: {e}")
+        
+        # Enhanced prompt using architecture specifications
+        structured_prompt = f"""
+Create a complete Python project based on:
+DESCRIPTION: "{description}"
+
+EXISTING ARCHITECTURE SPECIFICATIONS:
+{architecture_content}
+
+IMPORTANT: Follow the architecture specifications and create a proper project structure:
+
+Use this EXACT format with proper directory structure:
+
+FILE: src/main.py
+```python
+# Main entry point following architecture
+```
+
+FILE: src/scraper.py  
+```python
+# Core scraping logic as specified
+```
+
+[Continue with all files as specified in architecture...]
+
+PROJECT REQUIREMENTS:
+1. Follow the architecture specifications exactly
+2. Create proper src/ and tests/ directory structure  
+3. Implement all components mentioned in architecture
+4. Use the technology stack recommended in architecture
+5. Follow the design patterns specified
+6. Include proper error handling and logging
+7. Create comprehensive tests
+
+CRITICAL: Use the architecture documents to determine:
+- Exact file structure and names
+- Component responsibilities  
+- Technology choices
+- Design patterns to implement
+
+Generate ALL files needed for a complete working system following the architecture!
+"""
+
+        self.log_info("Generating structured project from architecture specs...")
+        response = await self.ai_client.generate_response(structured_prompt)
+
+        if response and response.content:
+            return await self._parse_multi_file_response(response.content)
+        else:
+            error_msg = "No response from AI for architecture-based generation"
             self.log_warning(error_msg)
             return False, [], [error_msg]
 

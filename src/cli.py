@@ -30,6 +30,66 @@ app = typer.Typer(
 )
 
 
+@app.command("config")
+def config_command(
+    action: str = typer.Argument(..., help="Configuration action (github-token, api-key, show)"),
+    value: str = typer.Argument("", help="Configuration value"),
+):
+    """🔧 Configure Smart CLI settings"""
+    import asyncio
+    from utils.config import ConfigManager
+    
+    config_manager = ConfigManager()
+    
+    if action == "github-token":
+        if not value:
+            console.print("❌ [red]GitHub token tələb olunur: smart config github-token ghp_...[/red]")
+            return
+        
+        if not (value.startswith("ghp_") or value.startswith("github_pat_")):
+            console.print("⚠️ [yellow]GitHub token 'ghp_' və ya 'github_pat_' ilə başlamalıdır[/yellow]")
+        
+        config_manager.set_config("github_token", value, secure=True)
+        console.print("✅ [green]GitHub token uğurla yadda saxlanıldı![/green]")
+        console.print("💡 [blue]GitHub integrasiyası indi işləyəcək[/blue]")
+    
+    elif action == "api-key":
+        if not value:
+            console.print("❌ [red]API key tələb olunur: smart config api-key sk-or-...[/red]")
+            return
+            
+        if not value.startswith("sk-or-"):
+            console.print("⚠️ [yellow]OpenRouter API key 'sk-or-' ilə başlamalıdır[/yellow]")
+        
+        config_manager.set_config("openrouter_api_key", value, secure=True)
+        console.print("✅ [green]API key uğurla yadda saxlanıldı![/green]")
+    
+    elif action == "show":
+        from rich.table import Table
+        
+        config = config_manager.get_all_config()
+        table = Table(title="📊 Smart CLI Konfiqurasiyası")
+        table.add_column("Parametr", style="cyan")
+        table.add_column("Dəyər", style="white") 
+        table.add_column("Status", style="yellow")
+        
+        # Show important settings (hide sensitive values)
+        settings = [
+            ("API Key", "***" + str(config.get("openrouter_api_key", "Yoxdur"))[-4:] if config.get("openrouter_api_key") else "Təyin edilməyib", "✅" if config.get("openrouter_api_key") else "❌"),
+            ("GitHub Token", "***" + str(config.get("github_token", "Yoxdur"))[-4:] if config.get("github_token") else "Təyin edilməyib", "✅" if config.get("github_token") else "⚠️"),
+            ("Default Model", config.get("default_model", "anthropic/claude-3-sonnet-20240229"), "✅"),
+            ("Max Tokens", str(config.get("max_tokens", 4000)), "✅"),
+        ]
+        
+        for param, value, status in settings:
+            table.add_row(param, str(value), status)
+        
+        console.print(table)
+    
+    else:
+        console.print(f"❌ [red]Naməlum əmr: {action}[/red]")
+        console.print("💡 Mövcud əmrlər: github-token, api-key, show")
+
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,

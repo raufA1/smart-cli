@@ -12,7 +12,11 @@ class FileManager:
     """Handles all file operations for Smart CLI."""
 
     def __init__(self):
-        self.current_directory = os.getcwd()
+        try:
+            self.current_directory = os.getcwd()
+        except (FileNotFoundError, OSError):
+            # Fallback to home directory if current directory doesn't exist
+            self.current_directory = os.path.expanduser("~")
 
     async def read_file_content(self, file_path: str, show_full: bool = False):
         """Read and display file content with smart formatting."""

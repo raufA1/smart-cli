@@ -16,7 +16,11 @@ class SimpleGitManager:
 
     def _find_repo_root(self) -> Optional[str]:
         """Find Git repository root."""
-        current_path = Path.cwd()
+        try:
+            current_path = Path.cwd()
+        except (FileNotFoundError, OSError):
+            # Fallback to home directory if current directory doesn't exist
+            current_path = Path.home()
 
         while current_path != current_path.parent:
             if (current_path / ".git").exists():
@@ -215,7 +219,10 @@ class SimpleGitManager:
             success, output, error = await self._run_git_command(["init"])
 
             if success:
-                self.repo_path = os.getcwd()
+                try:
+                    self.repo_path = os.getcwd()
+                except (FileNotFoundError, OSError):
+                    self.repo_path = os.path.expanduser("~")
                 if self.ui_manager:
                     self.ui_manager.display_success("Git repository initialized")
                 return True

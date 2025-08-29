@@ -17,9 +17,15 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 def load_env_file_manual():
     """Load environment variables from .env file manually."""
     # Try current directory first, then parent directories
+    try:
+        current_dir = Path.cwd()
+    except (FileNotFoundError, OSError):
+        # Fallback to home directory if current working directory doesn't exist
+        current_dir = Path.home()
+    
     paths_to_try = [
-        Path.cwd() / ".env",
-        Path.cwd().parent / ".env",
+        current_dir / ".env",
+        current_dir.parent / ".env",
         Path(__file__).parent.parent.parent / ".env",
     ]
 
@@ -118,6 +124,9 @@ class ConfigManager:
 
         # Load environment variables
         config.update(self._load_env_config())
+        
+        # Load project-level configuration from .smart/
+        config.update(self._load_project_config())
 
         return config
 
@@ -144,6 +153,45 @@ class ConfigManager:
                 env_config[config_key] = os.environ[env_var]
 
         return env_config
+
+    def _load_project_config(self) -> Dict[str, Any]:
+        """Load project-level configuration from .smart/ directory."""
+        project_config = {}
+        
+        try:
+            # Look for .smart/budget.json in current directory
+            smart_dir = Path(".smart")
+            budget_file = smart_dir / "budget.json"
+            
+            if budget_file.exists():
+                import json
+                with open(budget_file, "r") as f:
+                    budget_data = json.load(f)
+                
+                # Map budget settings to config keys
+                budget_mappings = {
+                    "AI_DAILY_LIMIT": "daily_budget",
+                    "AI_MONTHLY_LIMIT": "monthly_budget", 
+                    "AI_REQUEST_LIMIT": "request_budget",
+                    "AI_EMERGENCY_RESERVE": "emergency_reserve",
+                    "BUDGET_PROFILE": "budget_profile"
+                }
+                
+                for budget_key, config_key in budget_mappings.items():
+                    if budget_key in budget_data:
+                        try:
+                            # Convert to float for numeric values
+                            if budget_key != "BUDGET_PROFILE":
+                                project_config[config_key] = float(budget_data[budget_key])
+                            else:
+                                project_config[config_key] = budget_data[budget_key]
+                        except (ValueError, TypeError):
+                            pass  # Skip invalid values
+                            
+        except Exception:
+            pass  # Silently ignore project config errors
+        
+        return project_config
 
     def get_config(self, key: str, default: Any = None) -> Any:
         """Get configuration value."""

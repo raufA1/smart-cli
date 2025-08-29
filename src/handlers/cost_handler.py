@@ -274,7 +274,7 @@ class CostHandler(BaseHandler):
         cost_optimizer.budget.daily_limit = amount
 
         # Update environment file
-        await self._update_env_file("AI_DAILY_LIMIT", str(amount))
+        await self._update_project_config("AI_DAILY_LIMIT", str(amount))
 
         console.print(
             f"✅ [green]Daily budget limit updated: ${old_limit:.2f} → ${amount:.2f}[/green]"
@@ -291,7 +291,7 @@ class CostHandler(BaseHandler):
         old_limit = cost_optimizer.budget.monthly_limit
         cost_optimizer.budget.monthly_limit = amount
 
-        await self._update_env_file("AI_MONTHLY_LIMIT", str(amount))
+        await self._update_project_config("AI_MONTHLY_LIMIT", str(amount))
 
         console.print(
             f"✅ [green]Monthly budget limit updated: ${old_limit:.2f} → ${amount:.2f}[/green]"
@@ -308,48 +308,53 @@ class CostHandler(BaseHandler):
         old_limit = cost_optimizer.budget.per_request_limit
         cost_optimizer.budget.per_request_limit = amount
 
-        await self._update_env_file("AI_REQUEST_LIMIT", str(amount))
+        await self._update_project_config("AI_REQUEST_LIMIT", str(amount))
 
         console.print(
             f"✅ [green]Per-request limit updated: ${old_limit:.2f} → ${amount:.2f}[/green]"
         )
         console.print("🔄 [blue]Restart Smart CLI to persist changes[/blue]")
 
-    async def _update_env_file(self, key: str, value: str):
-        """Update .env file with new budget value."""
+    async def _update_project_config(self, key: str, value: str):
+        """Update project configuration in .smart/ directory."""
         import os
+        import json
         from pathlib import Path
+        from datetime import datetime
 
-        env_file = Path(".env")
-        if not env_file.exists():
-            console.print(
-                "⚠️ [yellow].env file not found - changes will be temporary[/yellow]"
-            )
-            return
-
+        smart_dir = Path(".smart")
+        config_file = smart_dir / "budget.json"
+        
+        # Create .smart directory if it doesn't exist
+        if not smart_dir.exists():
+            console.print("📝 [blue]Creating .smart/ directory for project settings...[/blue]")
+            try:
+                smart_dir.mkdir()
+                console.print("✅ [green].smart/ directory created![/green]")
+            except Exception as e:
+                console.print(f"❌ [red]Failed to create .smart/ directory: {e}[/red]")
+                return
+        
+        # Load existing config or create new
+        config = {}
+        if config_file.exists():
+            try:
+                with open(config_file, "r") as f:
+                    config = json.load(f)
+            except Exception:
+                config = {}
+        
+        # Update configuration
+        config[key] = value
+        config["updated_at"] = str(datetime.now())
+        
         try:
-            # Read existing content
-            with open(env_file, "r") as f:
-                lines = f.readlines()
-
-            # Update or add the key
-            updated = False
-            for i, line in enumerate(lines):
-                if line.strip().startswith(f"{key}="):
-                    lines[i] = f"{key}={value}\n"
-                    updated = True
-                    break
-
-            # Add if not found
-            if not updated:
-                lines.append(f"\n{key}={value}\n")
-
-            # Write back
-            with open(env_file, "w") as f:
-                f.writelines(lines)
-
+            with open(config_file, "w") as f:
+                json.dump(config, f, indent=2)
+            console.print(f"✅ [green]Budget setting updated in .smart/budget.json[/green]")
         except Exception as e:
-            console.print(f"❌ [red]Failed to update .env file: {e}[/red]")
+            console.print(f"❌ [red]Failed to update project config: {e}[/red]")
+
 
     async def _interactive_budget_setup(self, cost_optimizer):
         """Interactive budget configuration wizard."""
@@ -466,7 +471,7 @@ class CostHandler(BaseHandler):
 
             # Update environment variables
             for key, value in env_vars.items():
-                await self._update_env_file(key, value)
+                await self._update_project_config(key, value)
 
             console.print(f"✅ [green]Applied '{profile.name}' budget profile![/green]")
             console.print(f"   Daily limit: ${profile.daily_limit:.2f}")
