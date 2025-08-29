@@ -458,6 +458,10 @@ class CostHandler(BaseHandler):
             if not profile_enum:
                 raise ValueError(f"Profile '{profile_name}' not found")
 
+            # Apply profile to session manager if available
+            if hasattr(self.smart_cli, 'session_manager'):
+                self.smart_cli.session_manager.set_budget_profile(profile_enum)
+
             env_vars = profile_manager.apply_profile(profile_enum)
 
             # Update environment variables

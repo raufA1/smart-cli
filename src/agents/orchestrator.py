@@ -28,13 +28,16 @@ class SmartCLIOrchestrator:
             from ..core.ai_cost_optimizer import get_cost_optimizer
             from ..core.task_classifier import get_task_classifier
             from ..core.terminal_ui import initialize_terminal_ui
+            from ..core.intelligent_execution_planner import IntelligentExecutionPlanner
         except ImportError:
             from core.ai_cost_optimizer import get_cost_optimizer
             from core.task_classifier import get_task_classifier
             from core.terminal_ui import initialize_terminal_ui
+            from core.intelligent_execution_planner import IntelligentExecutionPlanner
 
         self.cost_optimizer = get_cost_optimizer()
         self.task_classifier = get_task_classifier()
+        self.execution_planner = IntelligentExecutionPlanner()
         self.session_cost = 0.0
 
         # Initialize Terminal UI
@@ -58,7 +61,7 @@ class SmartCLIOrchestrator:
         return {}  # Lazy loading when needed
 
     async def create_detailed_plan(self, user_request: str) -> Dict[str, Any]:
-        """Create intelligent plan based on task classification."""
+        """Create intelligent plan with advanced execution planning."""
         self.ui.add_event("🎯", "System", "Smart planning mode activated")
         self.ui.add_event("🧠", "System", "Analyzing task complexity and risk")
 
@@ -67,25 +70,40 @@ class SmartCLIOrchestrator:
         pipeline = self.task_classifier.get_recommended_pipeline(complexity, risk)
         models = self.task_classifier.get_recommended_models(complexity, risk)
 
+        # Create intelligent execution plan
+        execution_plan = self.execution_planner.create_execution_plan(
+            agents=pipeline,
+            task_description=user_request,
+            complexity=complexity.value,
+            risk_level=risk.value
+        )
+
         # Log classification results
         self.ui.add_event(
             "📊",
             "System",
             f"{complexity.value.title()} complexity, {risk.value.title()} risk",
         )
+        
+        # Show execution strategy
+        if execution_plan.parallel_groups:
+            parallel_info = f"Parallel groups: {len(execution_plan.parallel_groups)}"
+            self.ui.add_event("⚡", "System", parallel_info)
+        
         self.ui.add_event(
             "🤖",
             "System",
             f"Pipeline: {' → '.join([agent.title() for agent in pipeline])}",
         )
 
-        # Create adaptive plan
+        # Create adaptive plan with intelligent execution
         plan = {
             "title": f"Smart {complexity.value.title()} Plan",
             "complexity": complexity.value,
             "risk": risk.value,
             "pipeline": pipeline,
             "models": models,
+            "execution_plan": execution_plan,
             "steps": self._create_pipeline_steps(pipeline, models, complexity, risk),
             "estimated_cost": self._estimate_plan_cost(pipeline, models),
         }
@@ -146,12 +164,13 @@ class SmartCLIOrchestrator:
     async def _execute_smart_pipeline(
         self, plan: Dict[str, Any], original_request: str
     ) -> bool:
-        """Execute smart adaptive pipeline with full dashboard UI."""
+        """Execute smart adaptive pipeline with intelligent execution planning."""
 
         pipeline = plan.get("pipeline", [])
         models = plan.get("models", {})
         complexity = plan.get("complexity", "medium")
         risk = plan.get("risk", "medium")
+        execution_plan = plan.get("execution_plan")
 
         # Map pipeline to phases
         phase_mapping = {
@@ -170,7 +189,16 @@ class SmartCLIOrchestrator:
             results = []
             total_cost = 0.0
 
-            for i, agent_type in enumerate(pipeline, 1):
+            # Execute using intelligent execution planner if available
+            if execution_plan and execution_plan.parallel_groups:
+                self.ui.add_event("⚡", "System", "Using parallel execution optimization")
+                results = await self._execute_parallel_pipeline(
+                    execution_plan, original_request, phase_mapping, complexity, risk
+                )
+                total_cost = sum(getattr(r, 'cost', 0.01) for r in results)
+            else:
+                # Fall back to sequential execution
+                for i, agent_type in enumerate(pipeline, 1):
                 # Start corresponding phase
                 phase_name = phase_mapping.get(agent_type, "implementation")
                 self.ui.start_phase(phase_name)

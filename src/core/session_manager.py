@@ -7,6 +7,11 @@ from typing import Optional
 from rich.console import Console
 from rich.panel import Panel
 
+try:
+    from .budget_profiles import get_profile_manager, UsageProfile
+except ImportError:
+    from budget_profiles import get_profile_manager, UsageProfile
+
 console = Console()
 
 
@@ -19,6 +24,8 @@ class SessionManager:
         self.start_time = datetime.now()
         self.conversation_history = []
         self.session_active = False
+        self.budget_manager = get_profile_manager()
+        self.current_profile = None
 
     def display_welcome(self):
         """Display Smart CLI welcome message."""
@@ -42,6 +49,15 @@ class SessionManager:
         # System status
         console.print("(✓) Sistem Statusu: ", style="green", end="")
         console.print("Tam Hazır", style="bold green")
+        
+        # Budget profile info
+        if self.current_profile:
+            profile = self.budget_manager.get_profile(self.current_profile)
+            console.print(f"(💰) Budget Profili: {profile.name}", style="cyan")
+            console.print(f"    Günlük limit: ${profile.daily_limit:.2f} | Aylıq: ${profile.monthly_limit:.2f}", style="dim cyan")
+        else:
+            console.print("(💰) Budget Profili: Seçilməyib - 'budget' əmrini istifadə edin", style="dim yellow")
+        
         console.print()
 
         # Ready message
@@ -68,3 +84,33 @@ class SessionManager:
     def get_recent_history(self, count: int = 10):
         """Get recent conversation history."""
         return self.conversation_history[-count:]
+    
+    def set_budget_profile(self, profile_type: UsageProfile):
+        """Set current budget profile."""
+        self.current_profile = profile_type
+        profile = self.budget_manager.get_profile(profile_type)
+        console.print(f"✅ Budget profili dəyişdirildi: {profile.name}", style="green")
+        console.print(f"   Günlük limit: ${profile.daily_limit:.2f}", style="dim green")
+        console.print(f"   Aylıq limit: ${profile.monthly_limit:.2f}", style="dim green")
+    
+    def get_budget_profile(self):
+        """Get current budget profile."""
+        return self.current_profile
+    
+    def show_budget_info(self):
+        """Display budget profile information."""
+        if not self.current_profile:
+            console.print("❌ Budget profili seçilməyib", style="red")
+            console.print("Mövcud profillər:", style="bold")
+            for profile_type, profile in self.budget_manager.list_profiles().items():
+                console.print(f"  • {profile.name}: {profile.description}", style="dim")
+                console.print(f"    Günlük: ${profile.daily_limit:.2f}, Aylıq: ${profile.monthly_limit:.2f}", style="dim cyan")
+            return
+        
+        profile = self.budget_manager.get_profile(self.current_profile)
+        console.print(f"📊 Cari Budget Profili: {profile.name}", style="bold cyan")
+        console.print(f"   {profile.description}", style="dim")
+        console.print(f"   Günlük limit: ${profile.daily_limit:.2f}", style="cyan")
+        console.print(f"   Aylıq limit: ${profile.monthly_limit:.2f}", style="cyan")
+        console.print(f"   Sorğu başına limit: ${profile.per_request_limit:.2f}", style="cyan")
+        console.print(f"   Fövqəladə ehtiyat: ${profile.emergency_reserve:.2f}", style="cyan")
