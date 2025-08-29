@@ -9,6 +9,7 @@ from typer.testing import CliRunner
 
 from src.cli import app
 from src.utils.config import ConfigManager
+from src.core.budget_profiles import UsageProfile, BudgetProfile, get_profile_manager
 
 
 @pytest.fixture
@@ -261,3 +262,87 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "ai: marks tests that require AI API calls"
     )
+    config.addinivalue_line(
+        "markers", "budget: marks tests for budget management features"
+    )
+    config.addinivalue_line(
+        "markers", "execution_planner: marks tests for intelligent execution planner"
+    )
+
+
+@pytest.fixture
+def mock_budget_profile_manager():
+    """Provide mock budget profile manager for testing."""
+    return get_profile_manager()
+
+
+@pytest.fixture
+def sample_budget_profile():
+    """Provide sample budget profile for testing."""
+    return BudgetProfile(
+        name="Test Profile",
+        description="Test budget profile for unit tests",
+        daily_limit=10.0,
+        monthly_limit=300.0,
+        per_request_limit=1.0,
+        emergency_reserve=25.0,
+        recommended_models={
+            "analyzer": "claude-haiku",
+            "modifier": "llama-3-8b",
+            "architect": "llama-3-70b",
+            "tester": "llama-3-8b",
+            "reviewer": "gpt-4o-mini"
+        }
+    )
+
+
+@pytest.fixture
+def mock_smart_cli():
+    """Provide mock Smart CLI instance for handler testing."""
+    smart_cli = Mock()
+    smart_cli.session_manager = Mock()
+    smart_cli.session_manager.set_budget_profile = Mock()
+    smart_cli.session_manager.get_budget_profile = Mock(return_value=None)
+    smart_cli.orchestrator = Mock()
+    smart_cli.ai_client = Mock()
+    smart_cli.config = Mock()
+    return smart_cli
+
+
+@pytest.fixture
+def mock_execution_plan():
+    """Provide mock execution plan for testing."""
+    from src.core.intelligent_execution_planner import ExecutionPlan, ParallelGroup
+    
+    group1 = ParallelGroup(
+        agents=["analyzer"],
+        estimated_duration=30.0,
+        resource_requirements={"cpu": 1, "memory": 512}
+    )
+    group2 = ParallelGroup(
+        agents=["modifier"],
+        estimated_duration=45.0,
+        resource_requirements={"cpu": 1, "memory": 1024}
+    )
+    
+    return ExecutionPlan(
+        parallel_groups=[group1, group2],
+        execution_order=["analyzer", "modifier"],
+        estimated_total_duration=75.0,
+        resource_conflicts=[],
+        optimization_applied=True
+    )
+
+
+@pytest.fixture
+def sample_env_content():
+    """Provide sample .env file content for testing."""
+    return """# Smart CLI Configuration
+OPENROUTER_API_KEY=test_key_123
+ANTHROPIC_API_KEY=sk-ant-test123
+AI_DAILY_LIMIT=15.00
+AI_MONTHLY_LIMIT=300.00
+AI_REQUEST_LIMIT=2.00
+AI_EMERGENCY_RESERVE=25.00
+BUDGET_PROFILE=developer
+"""
