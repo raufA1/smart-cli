@@ -21,7 +21,7 @@ class SimpleTerminalManager:
     """Minimal terminal command execution."""
 
     def __init__(self):
-        self.ui_manager = ui_manager
+        self.ui_manager = None  # Will be set by orchestrator
         self.current_directory = os.getcwd()
 
     async def execute_command(self, command: str) -> CommandResult:
