@@ -42,7 +42,7 @@ jobs:
         pip-audit --desc || echo "pip-audit completed with warnings"
     
     - name: Upload dependency scan results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: dependency-security-reports
@@ -72,7 +72,7 @@ jobs:
         bandit -r src/ -f txt
     
     - name: Upload Bandit results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: bandit-security-report
@@ -125,7 +125,7 @@ jobs:
         echo "📄 License compliance check completed"
     
     - name: Upload license report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: license-report
         path: licenses.json

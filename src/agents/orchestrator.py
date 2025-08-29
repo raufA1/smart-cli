@@ -14,8 +14,14 @@ console = Console()
 class SmartCLIOrchestrator:
     """Clean orchestrator with smart task classification and adaptive pipeline."""
 
-    def __init__(self, ai_client=None):
+    def __init__(self, ai_client=None, config_manager=None):
         self.ai_client = ai_client
+        self.config_manager = config_manager
+        
+        # Initialize AI client if not provided but config manager is available
+        if not self.ai_client and self.config_manager:
+            from ..utils.simple_ai_client import SimpleOpenRouterClient
+            self.ai_client = SimpleOpenRouterClient(self.config_manager)
 
         # Initialize smart systems
         try:
@@ -289,35 +295,35 @@ class SmartCLIOrchestrator:
             pass  # Silently handle for cleaner UI
 
         try:
-            # Execute agent
+            # Execute agent with config manager
             if agent_type == "architect":
                 from .architect_agent import ArchitectAgent
 
-                agent = ArchitectAgent(self.ai_client)
+                agent = ArchitectAgent(self.ai_client, self.config_manager)
                 result = await agent.execute(target, description)
 
             elif agent_type == "analyzer":
                 from .analyzer_agent import AnalyzerAgent
 
-                agent = AnalyzerAgent(self.ai_client)
+                agent = AnalyzerAgent(self.ai_client, self.config_manager)
                 result = await agent.execute(target, description)
 
             elif agent_type == "modifier":
                 from .modifier_agent import ModifierAgent
 
-                agent = ModifierAgent(self.ai_client)
+                agent = ModifierAgent(self.ai_client, self.config_manager)
                 result = await agent.execute(target, description)
 
             elif agent_type == "tester":
                 from .tester_agent import TesterAgent
 
-                agent = TesterAgent(self.ai_client)
+                agent = TesterAgent(self.ai_client, self.config_manager)
                 result = await agent.execute(target, description)
 
             elif agent_type == "reviewer":
                 from .reviewer_agent import ReviewerAgent
 
-                agent = ReviewerAgent(self.ai_client)
+                agent = ReviewerAgent(self.ai_client, self.config_manager)
                 result = await agent.execute(target, description)
 
             else:

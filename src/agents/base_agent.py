@@ -40,11 +40,17 @@ class AgentReport:
 class BaseAgent(ABC):
     """Base class for all Smart CLI agents."""
 
-    def __init__(self, ai_client=None):
+    def __init__(self, ai_client=None, config_manager=None):
         self.ai_client = ai_client
+        self.config_manager = config_manager
         self.agent_name = "Base Agent"
         self.agent_emoji = "🤖"
         self.current_task_start = None
+        
+        # Initialize AI client if not provided but config manager is available
+        if not self.ai_client and self.config_manager:
+            from ..utils.simple_ai_client import SimpleOpenRouterClient
+            self.ai_client = SimpleOpenRouterClient(self.config_manager)
 
         # Memory and learning system
         self.memory_enabled = True

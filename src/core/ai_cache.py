@@ -24,9 +24,8 @@ class AIResponseCache:
         # Cache statistics
         self.stats = {"hits": 0, "misses": 0, "invalidations": 0, "size_cleanups": 0}
 
-        # Background cleanup task
+        # Background cleanup task - will be started when needed
         self._cleanup_task = None
-        self._start_background_cleanup()
 
     def _generate_cache_key(self, prompt: str, context: Dict[str, Any] = None) -> str:
         """Generate unique cache key for prompt + context."""
@@ -147,9 +146,15 @@ class AIResponseCache:
             pass
 
     def _start_background_cleanup(self):
-        """Start background cleanup task."""
+        """Start background cleanup task if event loop is running."""
         if self._cleanup_task is None:
-            self._cleanup_task = asyncio.create_task(self._background_cleanup())
+            try:
+                loop = asyncio.get_running_loop()
+                if loop and not loop.is_closed():
+                    self._cleanup_task = asyncio.create_task(self._background_cleanup())
+            except RuntimeError:
+                # No event loop running, skip background task
+                pass
 
     async def _background_cleanup(self):
         """Background task for periodic cache maintenance."""

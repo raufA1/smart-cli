@@ -12,8 +12,8 @@ from .base_agent import BaseAgent
 class AnalyzerAgent(BaseAgent):
     """Intelligent Code Analyzer Agent - AI-powered expert for deep code analysis."""
 
-    def __init__(self, ai_client=None):
-        super().__init__(ai_client)
+    def __init__(self, ai_client=None, config_manager=None):
+        super().__init__(ai_client, config_manager)
         self.agent_name = "Code Analyzer Agent"
         self.agent_emoji = "🔍"
         self.expertise_areas = [

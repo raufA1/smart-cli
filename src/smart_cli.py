@@ -145,11 +145,13 @@ class SmartCLI:
             return False
 
     async def _initialize_ai_client(self):
-        """Initialize AI client with fallback."""
+        """Initialize AI client with config manager integration."""
         try:
-            self.ai_client = OpenRouterClient(self.config)
-            # Test AI client with a simple request
-            await self._test_ai_connection()
+            from .utils.simple_ai_client import SimpleOpenRouterClient
+            self.ai_client = SimpleOpenRouterClient(self.config)
+            
+            # Initialize the AI client session
+            await self.ai_client.initialize()
             return True
         except Exception as e:
             if self.debug:
@@ -177,10 +179,10 @@ class SmartCLI:
             return False
 
     def _initialize_orchestrator(self):
-        """Initialize orchestrator if AI client available."""
+        """Initialize orchestrator with config manager integration."""
         try:
             if self.ai_client:
-                self.orchestrator = SmartCLIOrchestrator(self.ai_client)
+                self.orchestrator = SmartCLIOrchestrator(self.ai_client, self.config)
                 return True
             else:
                 if self.debug:
@@ -197,8 +199,9 @@ class SmartCLI:
         """Initialize core components."""
         try:
             # Initialize GitHub manager
-            if os.getenv("GITHUB_TOKEN"):
-                self.github_manager = GitHubManager(self.ui_manager)
+            github_token = self.config.get_config("github_token")
+            if github_token:
+                self.github_manager = GitHubManager()  # Removed deprecated ui_manager
                 if self.debug:
                     console.print(
                         "✅ [dim green]GitHub integration initialized[/dim green]"

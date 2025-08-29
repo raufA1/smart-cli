@@ -31,7 +31,7 @@ class SimpleOpenRouterClient:
 
     def __init__(self, config_manager):
         self.config = config_manager
-        self.api_key = config_manager.get_config("openrouter_api_key")
+        self.api_key = config_manager.get_config("openrouter_api_key") or config_manager.get_config("anthropic_api_key") 
         self.base_url = "https://openrouter.ai/api/v1"
         self.session = None
         self.last_request_time = 0
@@ -42,6 +42,13 @@ class SimpleOpenRouterClient:
         self.current_model = config_manager.get_config(
             "default_model", "anthropic/claude-3-sonnet-20240229"
         )
+        
+        # Support direct Anthropic API if no OpenRouter key
+        if not self.api_key:
+            self.api_key = config_manager.get_config("anthropic_api_key")
+            if self.api_key:
+                self.base_url = "https://api.anthropic.com/v1"
+                self.current_model = "claude-3-sonnet-20240229"
 
         # Intelligent caching system
         self.cache_enabled = config_manager.get_config("ai_cache_enabled", True)
@@ -55,7 +62,10 @@ class SimpleOpenRouterClient:
             from ..core.ai_cache import get_ai_cache
 
             self.cache = get_ai_cache()
-        except ImportError:
+            # Start background cleanup if event loop is available
+            if hasattr(self.cache, '_start_background_cleanup'):
+                self.cache._start_background_cleanup()
+        except (ImportError, RuntimeError):
             self.cache_enabled = False
             self.cache = None
 

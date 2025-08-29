@@ -328,17 +328,113 @@ class ConfigManager:
 
     def validate_config(self) -> bool:
         """Validate configuration completeness and correctness."""
-        required_keys = ["default_model", "max_tokens", "temperature"]
-
-        for key in required_keys:
-            if key not in self.config:
-                logging.error(f"Missing required configuration: {key}")
-                return False
-
-        # Validate database configuration
-        db_config = self.get_database_config()
-        if not db_config.get("url"):
-            logging.error("Database URL not configured")
-            return False
-
-        return True
+        errors = []
+        warnings = []
+        
+        # Check required basic configuration
+        required_keys = {
+            "default_model": str,
+            "max_tokens": int, 
+            "temperature": float
+        }
+        
+        for key, expected_type in required_keys.items():
+            value = self.config.get(key)
+            if value is None:
+                # Use defaults for missing values
+                defaults = self.get_default_config()
+                self.config[key] = defaults.get(key)
+                warnings.append(f"Using default value for {key}: {self.config[key]}")
+            else:
+                # Validate type
+                try:
+                    if expected_type == int:
+                        self.config[key] = int(value)
+                    elif expected_type == float:
+                        self.config[key] = float(value)
+                    elif expected_type == str:
+                        self.config[key] = str(value)
+                except (ValueError, TypeError):
+                    errors.append(f"Invalid type for {key}: expected {expected_type.__name__}, got {type(value).__name__}")
+        
+        # Validate value ranges
+        if self.config.get("max_tokens", 0) < 1 or self.config.get("max_tokens", 0) > 32000:
+            warnings.append("max_tokens should be between 1 and 32000")
+            
+        if self.config.get("temperature", 0) < 0 or self.config.get("temperature", 0) > 2:
+            warnings.append("temperature should be between 0 and 2")
+        
+        # Validate API keys if present
+        api_keys = ["openrouter_api_key", "anthropic_api_key", "openai_api_key"]
+        has_api_key = False
+        for key in api_keys:
+            if self.config.get(key):
+                has_api_key = True
+                api_key = self.config[key]
+                if len(api_key) < 10:
+                    warnings.append(f"{key} seems too short")
+                elif not api_key.startswith(("sk-", "api-", "ghp_", "github_pat_")):
+                    warnings.append(f"{key} format might be incorrect")
+        
+        if not has_api_key:
+            warnings.append("No API keys configured - AI features will be limited")
+        
+        # Validate model name
+        model = self.config.get("default_model", "")
+        if model and "/" not in model and not model.startswith(("gpt-", "claude-", "gemini-")):
+            warnings.append(f"Model name '{model}' might be incorrect format")
+        
+        # Log validation results
+        for warning in warnings:
+            logging.warning(f"Config validation: {warning}")
+        
+        for error in errors:
+            logging.error(f"Config validation: {error}")
+        
+        # Return True if no critical errors
+        return len(errors) == 0
+    
+    def get_validation_report(self) -> dict:
+        """Get detailed validation report."""
+        report = {
+            "valid": True,
+            "errors": [],
+            "warnings": [],
+            "config_status": {}
+        }
+        
+        # Check API configuration
+        api_keys = {
+            "openrouter_api_key": "OpenRouter API",
+            "anthropic_api_key": "Anthropic API", 
+            "openai_api_key": "OpenAI API",
+            "github_token": "GitHub Integration"
+        }
+        
+        for key, description in api_keys.items():
+            value = self.config.get(key)
+            if value:
+                report["config_status"][description] = "✅ Configured"
+            else:
+                report["config_status"][description] = "❌ Not configured"
+        
+        # Check core settings
+        core_settings = {
+            "default_model": self.config.get("default_model", "Not set"),
+            "max_tokens": self.config.get("max_tokens", "Not set"),
+            "temperature": self.config.get("temperature", "Not set"),
+            "log_level": self.config.get("log_level", "INFO")
+        }
+        
+        for setting, value in core_settings.items():
+            report["config_status"][f"Core/{setting}"] = f"✅ {value}"
+        
+        # Validate and add warnings
+        if not any(self.config.get(key) for key in ["openrouter_api_key", "anthropic_api_key"]):
+            report["warnings"].append("No AI API keys configured")
+            
+        if not self.config.get("github_token"):
+            report["warnings"].append("GitHub integration not configured")
+        
+        report["valid"] = len(report["errors"]) == 0
+        return report

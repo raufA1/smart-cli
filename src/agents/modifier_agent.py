@@ -9,8 +9,8 @@ from .base_agent import BaseAgent
 class ModifierAgent(BaseAgent):
     """Code Modifier Agent for code modification and enhancement."""
 
-    def __init__(self, ai_client=None):
-        super().__init__(ai_client)
+    def __init__(self, ai_client=None, config_manager=None):
+        super().__init__(ai_client, config_manager)
         self.agent_name = "Code Modifier Agent"
         self.agent_emoji = "🔧"
 

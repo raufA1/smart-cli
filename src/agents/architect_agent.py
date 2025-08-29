@@ -15,8 +15,8 @@ console = Console()
 class ArchitectAgent(BaseAgent):
     """Intelligent System Architect Agent - AI-powered expert for system architecture and design."""
 
-    def __init__(self, ai_client=None):
-        super().__init__(ai_client)
+    def __init__(self, ai_client=None, config_manager=None):
+        super().__init__(ai_client, config_manager)
         self.agent_name = "System Architect Agent"
         self.agent_emoji = "🏗️"
         self.expertise_areas = [
