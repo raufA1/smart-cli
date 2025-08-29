@@ -55,15 +55,36 @@ class SmartCLIOrchestrator:
 
         # Initialize agent instances
         self.agents = self._initialize_agents()
+        
+        # Import extension methods
+        self._import_extension_methods()
 
     def _initialize_agents(self):
         """Initialize agent instances."""
         return {}  # Lazy loading when needed
+    
+    def _import_extension_methods(self):
+        """Import extension methods for orchestrator."""
+        try:
+            # Import extension methods
+            import types
+            from .orchestrator_extension import _execute_parallel_pipeline, _execute_single_agent
+            
+            # Bind extension methods to this instance
+            self._execute_parallel_pipeline = types.MethodType(_execute_parallel_pipeline, self)
+            self._execute_single_agent = types.MethodType(_execute_single_agent, self)
+        except ImportError:
+            # Extension methods not available - will fall back to sequential execution
+            pass
 
     async def create_detailed_plan(self, user_request: str) -> Dict[str, Any]:
         """Create intelligent plan with advanced execution planning."""
-        self.ui.add_event("🎯", "System", "Smart planning mode activated")
-        self.ui.add_event("🧠", "System", "Analyzing task complexity and risk")
+        console.print("🤖 [bold cyan]Orchestrator:[/bold cyan] Initializing Smart CLI...")
+        console.print("   - Collecting context")
+        console.print("   - Classifying request")
+        
+        self.ui.add_event("🤖", "Orchestrator", "Initializing Smart CLI execution")
+        self.ui.add_event("📋", "Orchestrator", "Collecting context and classifying request")
 
         # Classify task complexity and risk
         complexity, risk = self.task_classifier.classify_task(user_request)
@@ -78,23 +99,36 @@ class SmartCLIOrchestrator:
             risk_level=risk.value
         )
 
-        # Log classification results
-        self.ui.add_event(
-            "📊",
-            "System",
-            f"{complexity.value.title()} complexity, {risk.value.title()} risk",
-        )
+        # Create execution phase plan  
+        phase_names = []
+        for agent in pipeline:
+            if agent == "analyzer":
+                phase_names.append("Analysis")
+            elif agent == "architect":
+                phase_names.append("Architecture")
+            elif agent == "modifier":
+                phase_names.append("Implementation")
+            elif agent == "tester":
+                phase_names.append("Testing")
+            elif agent == "reviewer":
+                phase_names.append("Review")
+        
+        console.print(f"   - Creating phase plan ({' → '.join(phase_names)})")
+        
+        # Log orchestrator analysis results
+        console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] Task classified as [bold]{complexity.value}[/bold] complexity, [bold]{risk.value}[/bold] risk")
+        
+        self.ui.add_event("📊", "Orchestrator", f"Task classified: {complexity.value} complexity, {risk.value} risk")
         
         # Show execution strategy
         if execution_plan.parallel_groups:
-            parallel_info = f"Parallel groups: {len(execution_plan.parallel_groups)}"
-            self.ui.add_event("⚡", "System", parallel_info)
+            parallel_info = f"Parallel execution: {len(execution_plan.parallel_groups)} groups"
+            console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] {parallel_info}")
+            self.ui.add_event("⚡", "Orchestrator", parallel_info)
         
-        self.ui.add_event(
-            "🤖",
-            "System",
-            f"Pipeline: {' → '.join([agent.title() for agent in pipeline])}",
-        )
+        pipeline_display = ' → '.join([agent.title() for agent in pipeline])
+        console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] Pipeline: {pipeline_display}")
+        self.ui.add_event("📋", "Orchestrator", f"Execution pipeline: {pipeline_display}")
 
         # Create adaptive plan with intelligent execution
         plan = {
@@ -108,9 +142,10 @@ class SmartCLIOrchestrator:
             "estimated_cost": self._estimate_plan_cost(pipeline, models),
         }
 
-        self.ui.add_event(
-            "💰", "System", f"Estimated cost: ${plan['estimated_cost']:.3f}"
-        )
+        console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] Estimated cost: [bold green]${plan['estimated_cost']:.3f}[/bold green]")
+        self.ui.add_event("💰", "Orchestrator", f"Estimated cost: ${plan['estimated_cost']:.3f}")
+        
+        console.print()  # Add spacing
         return plan
 
     def _create_pipeline_steps(
@@ -181,17 +216,21 @@ class SmartCLIOrchestrator:
             "reviewer": "review",
         }
 
-        # Start UI with Live display
+        # Start UI with Live display  
+        execution_start_time = time.time()
+        
         with Live(self.ui.render(), refresh_per_second=4) as live:
-            self.ui.add_event("🚀", "System", "Smart CLI Orchestrator activated")
-            self.ui.add_event("📊", "System", f"Pipeline: {' → '.join(pipeline)}")
+            console.print("🤖 [bold cyan]Orchestrator:[/bold cyan] Starting execution pipeline")
+            self.ui.add_event("🚀", "Orchestrator", "Smart CLI Orchestrator activated")
+            self.ui.add_event("📊", "Orchestrator", f"Executing pipeline: {' → '.join(pipeline)}")
 
             results = []
             total_cost = 0.0
 
             # Execute using intelligent execution planner if available
             if execution_plan and execution_plan.parallel_groups:
-                self.ui.add_event("⚡", "System", "Using parallel execution optimization")
+                console.print("🤖 [bold cyan]Orchestrator:[/bold cyan] Using parallel execution optimization")
+                self.ui.add_event("⚡", "Orchestrator", "Using parallel execution optimization")
                 results = await self._execute_parallel_pipeline(
                     execution_plan, original_request, phase_mapping, complexity, risk
                 )
@@ -199,13 +238,20 @@ class SmartCLIOrchestrator:
             else:
                 # Fall back to sequential execution
                 for i, agent_type in enumerate(pipeline, 1):
-                # Start corresponding phase
-                phase_name = phase_mapping.get(agent_type, "implementation")
-                self.ui.start_phase(phase_name)
+                    # Start corresponding phase
+                    phase_name = phase_mapping.get(agent_type, "implementation")
+                    phase_display_name = phase_name.title()
+                    
+                    # Orchestrator dispatch message
+                    console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] Dispatching phase [{phase_display_name}]")
+                    self.ui.start_phase(phase_name)
+                    self.ui.add_event("📤", "Orchestrator", f"Dispatching phase [{phase_display_name}]")
 
-                # Start agent
-                task_desc = self._get_agent_task_description(agent_type)
-                self.ui.start_agent(agent_type, task_desc)
+                    # Start agent with enhanced display
+                    task_desc = self._get_agent_task_description(agent_type)
+                    agent_display = self.active_agents.get(agent_type, f"{agent_type} Agent")
+                    console.print(f"{agent_display}: Starting {task_desc.lower()}...")
+                    self.ui.start_agent(agent_type, task_desc)
 
                 # Update focus panel
                 self.ui.update_focus(
@@ -234,7 +280,7 @@ class SmartCLIOrchestrator:
                     duration = time.time() - start_time
                     total_cost += 0.01  # Fallback cost estimate
 
-                    # Complete agent and phase
+                    # Complete agent and phase  
                     self.ui.complete_agent(agent_type, result.success)
                     self.ui.complete_phase(phase_name, result.success)
 
@@ -250,25 +296,42 @@ class SmartCLIOrchestrator:
 
                     self.ui.update_agent_progress(agent_type, 100, metrics)
 
+                    # Orchestrator phase completion message
+                    status = "completed successfully" if result.success else "failed"
+                    console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] {phase_display_name} phase {status} ({duration:.1f}s)")
+                    
                     # Check if critical task failed
                     if not result.success and risk in ["critical", "high"]:
-                        self.ui.add_event(
-                            "🛑",
-                            "System",
-                            "Critical task failed, stopping pipeline",
-                            "error",
-                        )
+                        console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] Critical failure detected → stopping pipeline")
+                        self.ui.add_event("🛑", "Orchestrator", "Critical task failed, stopping pipeline", "error")
                         break
+                    
+                    # Show next phase message (if not last)
+                    if i < len(pipeline):
+                        next_agent = pipeline[i]
+                        next_phase = phase_mapping.get(next_agent, "implementation").title()
+                        console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] Proceeding to {next_phase} phase...")
+                        await asyncio.sleep(0.5)  # Brief pause for readability
 
                 except Exception as e:
                     duration = time.time() - start_time
                     error_msg = str(e)[:50] + "..." if len(str(e)) > 50 else str(e)
 
+                    # Agent error message
+                    agent_display = self.active_agents.get(agent_type, f"{agent_type} Agent")
+                    console.print(f"❌ {agent_display}: {error_msg}")
+                    
+                    # Orchestrator failure detection
+                    console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] Failure detected → activating Debug mode")
+                    console.print(f"🪲 [bold yellow]Debug Agent:[/bold yellow] Analyzing failure: {error_msg}")
+
                     self.ui.complete_agent(agent_type, False)
                     self.ui.complete_phase(phase_name, False)
                     self.ui.add_event("❌", agent_type, error_msg, "error")
+                    self.ui.add_event("🪲", "Orchestrator", f"Debug mode activated for {agent_type} failure", "warning")
 
                     if risk in ["critical", "high"]:
+                        console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] Critical error → terminating pipeline")
                         return False
 
                 # Brief pause between agents
@@ -280,6 +343,40 @@ class SmartCLIOrchestrator:
 
             await asyncio.sleep(2)  # Show final state
 
+        # Orchestrator final summary
+        total_duration = time.time() - execution_start_time
+        success_count = sum(1 for r in results if r.success)
+        
+        console.print()
+        console.print("🤖 [bold cyan]Orchestrator:[/bold cyan] All phases completed")
+        
+        # Calculate and display total execution time
+        minutes = int(total_duration // 60)
+        seconds = int(total_duration % 60)
+        time_display = f"{minutes:02d}:{seconds:02d}" if minutes > 0 else f"{seconds}s"
+        console.print(f"🎉 [bold green]Project run finished in {time_display}[/bold green]")
+        
+        # Show agent results summary
+        for i, (agent_type, result) in enumerate(zip(pipeline, results)):
+            phase_name = phase_mapping.get(agent_type, agent_type).title()
+            agent_display = self.active_agents.get(agent_type, f"{agent_type} Agent")
+            
+            # Create status summary
+            status_parts = []
+            if hasattr(result, 'created_files') and result.created_files:
+                status_parts.append(f"created {len(result.created_files)} files")
+            if hasattr(result, 'modified_files') and result.modified_files:
+                status_parts.append(f"modified {len(result.modified_files)} files")
+            if hasattr(result, 'warnings') and result.warnings:
+                status_parts.append(f"{len(result.warnings)} warnings")
+            if hasattr(result, 'errors') and result.errors:
+                status_parts.append(f"{len(result.errors)} errors")
+            
+            status_text = ", ".join(status_parts) if status_parts else "completed"
+            result_icon = "✅" if result.success else "❌"
+            
+            console.print(f"   - {phase_name} by {agent_display} → {status_text} {result_icon}")
+        
         # Display final summary outside Live context
         final_summary = self.ui.create_final_summary()
         console.print(final_summary)  # Keep this one for final output

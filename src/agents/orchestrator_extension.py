@@ -9,10 +9,19 @@ async def _execute_parallel_pipeline(
     complexity: str, risk: str
 ) -> List[Any]:
     """Execute agents in parallel groups according to execution plan."""
+    from rich.console import Console
+    console = Console()
+    
     results = []
     
     for group_index, group in enumerate(execution_plan.parallel_groups):
-        self.ui.add_event("🔄", "System", f"Executing parallel group {group_index + 1}")
+        group_num = group_index + 1
+        console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] Executing parallel group {group_num}")
+        self.ui.add_event("🔄", "Orchestrator", f"Executing parallel group {group_num}")
+        
+        # Show which agents are running in parallel
+        agent_names = [self.active_agents.get(agent, f"{agent} Agent") for agent in group.agents]
+        console.print(f"   - Running in parallel: {', '.join(agent_names)}")
         
         # Execute agents in this group concurrently
         group_tasks = []
@@ -42,11 +51,16 @@ async def _execute_parallel_pipeline(
             else:
                 results.append(result)
         
+        # Orchestrator group completion message
+        successful = sum(1 for r in group_results if not isinstance(r, Exception) and getattr(r, 'success', True))
+        console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] Parallel group {group_num} completed ({successful}/{len(group.agents)} successful)")
+        
         # Check if we should continue to next group
         if risk in ["critical", "high"]:
             failures = [r for r in group_results if isinstance(r, Exception) or not getattr(r, 'success', True)]
             if failures:
-                self.ui.add_event("🛑", "System", "Critical failure in parallel group", "error")
+                console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] Critical failure in parallel group → stopping pipeline")
+                self.ui.add_event("🛑", "Orchestrator", "Critical failure in parallel group", "error")
                 break
     
     return results
@@ -56,9 +70,21 @@ async def _execute_single_agent(
     complexity: str, risk: str
 ):
     """Execute a single agent with UI updates."""
+    from rich.console import Console
+    console = Console()
+    
+    # Orchestrator dispatch for individual agent
+    phase_display = phase_name.title()
+    console.print(f"🤖 [bold cyan]Orchestrator:[/bold cyan] Dispatching phase [{phase_display}]")
+    
     # Start phase and agent
     self.ui.start_phase(phase_name)
     task_desc = self._get_agent_task_description(agent_type)
+    
+    # Agent start message
+    agent_display = self.active_agents.get(agent_type, f"{agent_type} Agent")
+    console.print(f"{agent_display}: Starting {task_desc.lower()}...")
+    
     self.ui.start_agent(agent_type, task_desc)
     
     start_time = time.time()
