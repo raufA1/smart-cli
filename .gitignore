@@ -155,3 +155,4 @@ safety-report.json
 .coverage
 .pytest_cache
 .toxtest-env/
+test-env/
