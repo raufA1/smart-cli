@@ -379,7 +379,6 @@ pre-commit run --all-files
 
 ```
 smart-cli/
-├── .claude/                    # Claude Code integration
 ├── src/
 │   ├── cli.py                 # Main CLI entry point
 │   ├── commands/              # Command implementations
