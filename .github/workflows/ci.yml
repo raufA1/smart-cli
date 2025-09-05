@@ -30,7 +30,8 @@ jobs:
     
     - name: Run tests with coverage
       run: |
-        python -m pytest tests/test_validation.py -v --cov=src --cov-report=xml --cov-report=term-missing || echo "Validation tests completed"
+        export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+        python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing || echo "Tests completed with coverage"
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
