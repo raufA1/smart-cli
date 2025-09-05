@@ -11,6 +11,12 @@ from rich.console import Console
 current_dir = os.path.dirname(__file__)
 sys.path.insert(0, current_dir)
 
+# Import branding utilities
+try:
+    from .utils.branding import display_welcome_banner, get_branded_prompt, format_section_header
+except ImportError:
+    from utils.branding import display_welcome_banner, get_branded_prompt, format_section_header
+
 # Import new modular Smart CLI
 try:
     from .smart_cli import SmartCLI
@@ -23,7 +29,7 @@ console = Console()
 # Create main Typer app for interactive mode only
 app = typer.Typer(
     name="smart",
-    help="🚀 Smart CLI - Interactive AI Assistant",
+    help="🤖 Smart CLI - Enterprise AI-Powered CLI Platform",
     add_completion=False,
     rich_markup_mode="rich",
     no_args_is_help=False,
@@ -36,6 +42,7 @@ def config_command(
     value: str = typer.Argument("", help="Configuration value"),
 ):
     """🔧 Configure Smart CLI settings"""
+    console.print(format_section_header("Smart CLI Configuration", "🔧"))
     import asyncio
     from utils.config import ConfigManager
     
@@ -129,6 +136,36 @@ def show_version():
 
     console.print(table)
 
+
+@app.callback(invoke_without_command=True)
+def main_callback(
+    ctx: typer.Context,
+    version: bool = typer.Option(False, "--version", "-v", help="Show version info"),
+):
+    """🤖 Smart CLI - Enterprise AI-Powered CLI Platform
+    
+    Run without arguments to start interactive AI assistant.
+    """
+    if version:
+        show_version()
+        return
+        
+    if ctx.invoked_subcommand is None:
+        # Show welcome banner when starting interactive mode
+        display_welcome_banner(console, compact=False)
+        
+        # Start interactive Smart CLI
+        asyncio.run(start_interactive_cli())
+
+async def start_interactive_cli():
+    """Start the interactive Smart CLI session."""
+    try:
+        smart_cli = SmartCLI(debug=False)
+        await smart_cli.run()
+    except KeyboardInterrupt:
+        console.print("\\n👋 [yellow]Goodbye![/yellow]")
+    except Exception as e:
+        console.print(f"❌ [red]Error starting Smart CLI: {e}[/red]")
 
 if __name__ == "__main__":
     app()
