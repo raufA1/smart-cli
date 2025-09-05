@@ -71,17 +71,25 @@ jobs:
         # Run original tests but don't fail CI if they have import issues
         python -m pytest tests/test_basic_ci.py -v --cov=src --cov-append --cov-report=xml --cov-report=term-missing --tb=short || echo "Original tests completed with some skips/failures"
     
-    - name: Verify coverage file exists
+    - name: Debug coverage generation
       run: |
+        echo "=== Coverage Debug Information ==="
+        echo "Current directory contents:"
+        ls -la
+        echo "Coverage files:"
+        find . -name "*.xml" -type f | head -10
+        echo "Coverage.xml content (if exists):"
         if [ -f coverage.xml ]; then
-          echo "✅ Coverage file exists"
-          echo "Coverage file size: $(wc -c < coverage.xml) bytes"
-          echo "Coverage file preview:"
-          head -20 coverage.xml || echo "Could not preview coverage.xml"
+          echo "File size: $(wc -c < coverage.xml) bytes"
+          echo "File content:"
+          cat coverage.xml
         else
-          echo "❌ Coverage file not found"
-          ls -la *.xml || echo "No XML files found"
+          echo "❌ coverage.xml not found"
         fi
+        echo "=== Src directory structure ==="
+        find src -type f | head -20
+        echo "=== Test execution trace ==="
+        echo "Python path: $PYTHONPATH"
     
     - name: Upload coverage to Codecov
       if: matrix.python-version == '3.9'
