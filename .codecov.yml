@@ -1,0 +1,203 @@
+# Codecov Configuration for Smart CLI Enterprise
+# Professional coverage reporting with comprehensive analysis
+
+coverage:
+  precision: 2
+  round: down
+  range: "60...95"  # Yellow to green coverage range
+  
+  status:
+    # Overall project coverage requirements
+    project:
+      default:
+        target: 80%         # Minimum overall coverage
+        threshold: 1%       # Allow 1% drop in coverage
+        if_ci_failed: error
+        informational: false
+    
+    # Individual patch coverage requirements  
+    patch:
+      default:
+        target: 75%         # New code coverage requirement
+        threshold: 0%       # No coverage drop allowed for patches
+        if_ci_failed: error
+        informational: false
+
+# Coverage report settings
+comment:
+  layout: "reach,diff,flags,tree,reach"
+  behavior: default
+  require_changes: false
+  require_base: no
+  require_head: yes
+
+# File and folder coverage analysis
+coverage:
+  ignore:
+    # Configuration and setup files
+    - "setup.py"
+    - "conftest.py"
+    - "*/conftest.py"
+    
+    # Test files (already excluded by default)
+    - "tests/"
+    - "*/tests/"
+    - "**/test_*.py"
+    - "**/*_test.py"
+    
+    # Documentation
+    - "docs/"
+    - "*.md"
+    - "*.rst"
+    - "*.txt"
+    
+    # Build and deployment
+    - ".github/"
+    - "scripts/"
+    - "docker/"
+    - "Dockerfile*"
+    - ".dockerignore"
+    
+    # Virtual environments and caches
+    - "venv/"
+    - ".venv/"
+    - "env/"
+    - ".env"
+    - "__pycache__/"
+    - "*.pyc"
+    - ".cache/"
+    - "cache/"
+    
+    # Development artifacts
+    - ".git/"
+    - ".gitignore"
+    - ".pre-commit-config.yaml"
+    - "pyproject.toml"
+    - "requirements*.txt"
+    - "tox.ini"
+    
+    # Example and template files
+    - "**/example*"
+    - "**/examples/"
+    - "*.example"
+    - ".smartcli.example"
+
+# Flag-based coverage tracking for different test types
+flags:
+  # Unit tests flag
+  unittests:
+    paths:
+      - src/
+    ignore:
+      - tests/
+  
+  # Integration tests flag  
+  integration:
+    paths:
+      - src/
+    ignore:
+      - tests/test_unit_*
+  
+  # Security tests flag
+  security:
+    paths:
+      - src/core/
+      - src/handlers/
+    ignore:
+      - tests/
+  
+  # Performance tests flag
+  performance:
+    paths:
+      - src/core/
+      - src/agents/
+    ignore:
+      - tests/
+
+# Component coverage tracking
+component_management:
+  individual_components:
+    # Core system components
+    - component_id: "core_system" 
+      name: "Core System"
+      paths:
+        - "src/core/"
+      flag_regexes:
+        - "unittests"
+        - "integration"
+    
+    # Enhanced Mode System
+    - component_id: "mode_system"
+      name: "Enhanced Mode System" 
+      paths:
+        - "src/core/mode_*.py"
+        - "src/core/context_manager.py"
+        - "src/core/enhanced_request_router.py"
+      flag_regexes:
+        - "unittests"
+    
+    # AI Agents
+    - component_id: "ai_agents"
+      name: "AI Agent System"
+      paths:
+        - "src/agents/"
+      flag_regexes:
+        - "unittests"
+        - "integration"
+    
+    # Request Handlers
+    - component_id: "handlers"
+      name: "Request Handlers"
+      paths:
+        - "src/handlers/"
+      flag_regexes:
+        - "unittests"
+        - "integration"
+    
+    # Integrations
+    - component_id: "integrations"
+      name: "External Integrations"
+      paths:
+        - "src/integrations/"
+      flag_regexes:
+        - "integration"
+        - "security"
+    
+    # Utilities
+    - component_id: "utilities"
+      name: "Utility Functions"
+      paths:
+        - "src/utils/"
+      flag_regexes:
+        - "unittests"
+
+# GitHub integration settings
+github_checks:
+  annotations: true
+
+# Notification settings
+notifications:
+  email: false
+  slack: false
+  webhook:
+    default: false
+
+# Advanced parsing options
+parsers:
+  gcov:
+    branch_detection:
+      conditional: true
+      loop: true
+      method: false
+      macro: false
+
+# Performance and reliability settings
+codecov:
+  max_report_age: "24h"      # Reports older than 24h are ignored
+  require_ci_to_pass: true   # Only process if CI passes
+  archive:
+    uploads: false           # Don't archive upload files
+  
+  # Validation settings
+  strict_yaml_branch: "main" # Strict YAML validation on main branch
+  disable_default_path_fixes: false
