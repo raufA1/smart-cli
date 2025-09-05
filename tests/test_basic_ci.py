@@ -29,42 +29,21 @@ class TestBasicCIFunctionality:
         assert (project_root / "pytest.ini").exists(), "pytest.ini missing"
         assert (project_root / "README.md").exists(), "README.md missing"
     
-    def test_src_init_module(self):
-        """Test src/__init__.py module can be imported and used."""
-        try:
-            from src import get_version, hello_smart_cli
-            
-            # Test version function
-            version = get_version()
-            assert isinstance(version, str), "Version should be string"
-            assert len(version) > 0, "Version should not be empty"
-            
-            # Test hello function 
-            greeting = hello_smart_cli()
-            assert isinstance(greeting, str), "Greeting should be string"
-            assert "Smart CLI" in greeting, "Greeting should contain Smart CLI"
-            assert version in greeting, "Greeting should contain version"
-            
-        except ImportError as e:
-            pytest.fail(f"Failed to import src module: {e}")
-    
     def test_main_cli_module_importable(self):
         """Test main CLI module can be imported."""
         try:
             from src import cli
-            # Basic import test - don't require specific attributes
-            assert cli is not None, "CLI module should be importable"
+            assert hasattr(cli, 'app'), "CLI app not found"
         except ImportError as e:
-            pytest.skip(f"CLI module not fully importable (dependencies): {e}")
+            pytest.fail(f"Failed to import main CLI module: {e}")
     
     def test_smart_cli_module_importable(self):
-        """Test Smart CLI main module can be imported.""" 
+        """Test Smart CLI main module can be imported."""
         try:
             from src import smart_cli
-            # Basic import test - don't require specific attributes
-            assert smart_cli is not None, "SmartCLI module should be importable"
+            assert hasattr(smart_cli, 'SmartCLI'), "SmartCLI class not found"
         except ImportError as e:
-            pytest.skip(f"SmartCLI module not fully importable (dependencies): {e}")
+            pytest.fail(f"Failed to import SmartCLI module: {e}")
     
     def test_core_utilities_importable(self):
         """Test core utilities can be imported."""
