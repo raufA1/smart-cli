@@ -256,11 +256,24 @@ class SmartCLI:
         await self.interactive_loop()
 
     async def interactive_loop(self):
-        """Main interactive loop with fundamental request routing."""
-        from core.request_router import RequestRouter
+        """Enhanced interactive loop with mode system support."""
+        try:
+            # Try to activate enhanced mode system
+            from core.mode_system_activator import get_mode_system_activator
+            
+            mode_activator = get_mode_system_activator(self)
+            enhanced_mode_available = await mode_activator.activate_enhanced_mode_system()
+            
+        except Exception as e:
+            if self.debug:
+                console.print(f"⚠️ [dim yellow]Enhanced mode system not available: {e}[/dim yellow]")
+            enhanced_mode_available = False
+            mode_activator = None
 
-        # Initialize request router
-        request_router = RequestRouter(self)
+        # Fallback to original router if enhanced system not available
+        if not enhanced_mode_available:
+            from core.request_router import RequestRouter
+            request_router = RequestRouter(self)
 
         while self.session_manager.session_active:
             try:
@@ -269,8 +282,12 @@ class SmartCLI:
                 if user_input is None:  # EOF or exit
                     break
 
-                # Route request to appropriate processor
-                should_continue = await request_router.process_request(user_input)
+                # Process with enhanced mode system or fallback to original
+                if enhanced_mode_available and mode_activator:
+                    should_continue = await mode_activator.process_request_with_modes(user_input)
+                else:
+                    should_continue = await request_router.process_request(user_input)
+                
                 if not should_continue:
                     break
 

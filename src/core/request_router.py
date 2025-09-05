@@ -1,4 +1,4 @@
-"""Smart CLI Request Router - Advanced request processing with intelligent classification."""
+"""Smart CLI Request Router - Advanced request processing with intelligent classification and mode support."""
 
 import asyncio
 import os
@@ -14,30 +14,44 @@ try:
         RequestType,
         get_intelligent_classifier,
     )
+    from .mode_manager import get_mode_manager, SmartMode
+    from .context_manager import get_context_manager
 except ImportError:
     from intelligent_request_classifier import (
         ClassificationResult,
         RequestType,
         get_intelligent_classifier,
     )
+    from mode_manager import get_mode_manager, SmartMode
+    from context_manager import get_context_manager
 
 
-class RequestRouter:
-    """Advanced request router with intelligent classification and context awareness."""
+class EnhancedRequestRouter:
+    """Advanced request router with intelligent classification, mode support and context awareness."""
 
     def __init__(self, smart_cli_instance):
-        """Initialize router with Smart CLI instance and intelligent classifier."""
+        """Initialize router with Smart CLI instance, mode manager and context manager."""
         self.smart_cli = smart_cli_instance
         self.orchestrator = smart_cli_instance.orchestrator
         self.handlers = smart_cli_instance.handlers
         self.command_handler = smart_cli_instance.command_handler
         self.debug = smart_cli_instance.debug
 
-        # Initialize intelligent classifier
+        # Initialize intelligent systems
         self.classifier = get_intelligent_classifier()
+        self.mode_manager = get_mode_manager(smart_cli_instance.config)
+        self.context_manager = get_context_manager()
+        
+        # Mode command patterns
+        self.mode_commands = {
+            "/mode": self._handle_mode_command,
+            "/modestatus": self._handle_mode_status,
+            "/context": self._handle_context_command,
+            "/switch": self._handle_quick_switch
+        }
 
     async def process_request(self, user_input: str) -> bool:
-        """Process user request using intelligent classification and routing.
+        """Process user request using mode-aware intelligent classification and routing.
 
         Returns:
             bool: True if request was handled, False if should exit
@@ -45,31 +59,45 @@ class RequestRouter:
         if not user_input.strip():
             return True
 
-        # Get current context
-        context = self._get_current_context()
-
-        # Intelligent request classification
-        classification = self.classifier.classify_request(user_input, context)
-
-        if self.debug:
-            console.print(
-                f"🔍 [dim]Request: {classification.request_type.value} (confidence: {classification.confidence:.2f})[/dim]"
-            )
-            console.print(
-                f"💭 [dim]Reasoning: {', '.join(classification.reasoning)}[/dim]"
-            )
-
-        # Route to appropriate processor
-        try:
-            return await self._route_to_processor(classification, user_input)
-        except Exception as e:
-            console.print(f"❌ [red]Request processing error: {str(e)}[/red]")
-            if self.debug:
-                console.print_exception()
+        # Check for explicit mode commands first
+        if await self._handle_mode_commands(user_input):
             return True
 
-    def _get_current_context(self) -> Dict[str, any]:
-        """Get current environment context for better classification."""
+        # Get current context with mode information
+        context = self._get_enhanced_context()
+        current_mode = self.mode_manager.current_mode
+        
+        # Auto-suggest mode switch if beneficial
+        await self._auto_suggest_mode_switch(user_input, context)
+
+        # Process based on current mode
+        if current_mode == SmartMode.SMART:
+            # Use intelligent classification in smart mode
+            return await self._process_with_intelligent_classification(user_input, context)
+        else:
+            # Process in specific mode
+            return await self._process_in_specific_mode(user_input, current_mode, context)
+
+    def _get_enhanced_context(self) -> Dict[str, any]:
+        """Get enhanced context with mode and historical information."""
+        # Base environment context
+        context = self._get_basic_environment_context()
+        
+        # Add mode information
+        current_mode = self.mode_manager.current_mode
+        context["current_mode"] = current_mode.value
+        context["mode_config"] = self.mode_manager.get_current_config()
+        context["mode_permissions"] = self.mode_manager.get_mode_permissions()
+        
+        # Add context manager data
+        mode_context = self.context_manager.get_mode_context(current_mode.value)
+        context["mode_context"] = mode_context
+        context["context_summary"] = self.context_manager.get_context_summary()
+        
+        return context
+    
+    def _get_basic_environment_context(self) -> Dict[str, any]:
+        """Get basic environment context for classification."""
         context = {}
 
         # Check if in git repository
