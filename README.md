@@ -1,7 +1,7 @@
 # Smart CLI Enterprise Edition
 
 <div align="center">
-  <img src="smart-cli-logo/icons/icon-256.png" alt="Smart CLI Logo" width="128" height="128">
+  <img src="https://raw.githubusercontent.com/raufA1/smart-cli/main/smart-cli-logo/icons/icon-256.png" alt="Smart CLI Logo" width="128" height="128">
 </div>
 
 [![Build Status](https://github.com/raufA1/smart-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/raufA1/smart-cli/actions/workflows/ci.yml)
