@@ -50,11 +50,25 @@ jobs:
           --maxfail=10 \
           || echo "Tests completed with some failures"
     
+    - name: Verify coverage file exists
+      run: |
+        if [ -f coverage.xml ]; then
+          echo "✅ Coverage file exists"
+          echo "Coverage file size: $(wc -c < coverage.xml) bytes"
+          echo "Coverage file preview:"
+          head -20 coverage.xml || echo "Could not preview coverage.xml"
+        else
+          echo "❌ Coverage file not found"
+          ls -la *.xml || echo "No XML files found"
+        fi
+    
     - name: Upload coverage to Codecov
       if: matrix.python-version == '3.9'
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
+        files: ./coverage.xml
         fail_ci_if_error: false
         verbose: true
+        flags: unittests
+        name: smart-cli-coverage
