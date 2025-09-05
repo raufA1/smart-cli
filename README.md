@@ -1,6 +1,6 @@
 # Smart CLI Enterprise Edition
 
-![GitHub Actions](https://github.com/raufA1/smart-cli/workflows/Working%20CI/badge.svg)
+[![GitHub Actions](https://github.com/raufA1/smart-cli/actions/workflows/working-ci.yml/badge.svg)](https://github.com/raufA1/smart-cli/actions)
 [![codecov](https://codecov.io/gh/raufA1/smart-cli/branch/main/graph/badge.svg?token=40fb1d9c-6465-443b-aa16-2d501c538b37)](https://codecov.io/gh/raufA1/smart-cli)
 [![Security Rating](https://img.shields.io/badge/security-A+-brightgreen.svg)](https://github.com/raufA1/smart-cli/security)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
