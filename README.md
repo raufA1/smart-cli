@@ -1,5 +1,9 @@
 # Smart CLI Enterprise Edition
 
+<div align="center">
+  <img src="smart-cli-logo/icons/icon-256.png" alt="Smart CLI Logo" width="128" height="128">
+</div>
+
 [![Build Status](https://github.com/raufA1/smart-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/raufA1/smart-cli/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/raufA1/smart-cli/branch/main/graph/badge.svg?token=40fb1d9c-6465-443b-aa16-2d501c538b37)](https://codecov.io/gh/raufA1/smart-cli)
 [![GitHub release](https://img.shields.io/github/v/release/raufA1/smart-cli?include_prereleases&sort=semver)](https://github.com/raufA1/smart-cli/releases/latest)
