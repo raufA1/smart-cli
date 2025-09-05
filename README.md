@@ -70,6 +70,8 @@
 
 ## 🚀 Quick Start
 
+<img src="https://raw.githubusercontent.com/raufA1/smart-cli/main/smart-cli-logo/icons/icon-32.png" alt="Smart CLI" width="24" height="24" style="vertical-align: middle;"> **Get started with Smart CLI in minutes**
+
 ### Production Installation
 
 ```bash
@@ -132,6 +134,8 @@ docker-compose logs -f
 ```
 
 ### 📖 Basic Usage Examples
+
+<img src="https://raw.githubusercontent.com/raufA1/smart-cli/main/smart-cli-logo/icons/icon-20.png" alt="Smart CLI" width="16" height="16" style="vertical-align: middle;"> **Command Examples**
 
 ```bash
 # 🤖 Interactive AI Chat (DEFAULT)
