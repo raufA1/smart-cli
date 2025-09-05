@@ -2,10 +2,8 @@
 
 [![CI](https://github.com/raufA1/smart-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/raufA1/smart-cli/actions)
 [![codecov](https://codecov.io/gh/raufA1/smart-cli/branch/main/graph/badge.svg?token=40fb1d9c-6465-443b-aa16-2d501c538b37)](https://codecov.io/gh/raufA1/smart-cli)
-[![Security Rating](https://img.shields.io/badge/security-A+-brightgreen.svg)](https://github.com/raufA1/smart-cli/security)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 🚀 **Enterprise-grade AI-powered CLI platform** with revolutionary **Enhanced Mode System**, multi-agent workflows, advanced security, and comprehensive monitoring for professional development teams.
 
